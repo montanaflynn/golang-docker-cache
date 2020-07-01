@@ -10,39 +10,48 @@ There is an [open issue](https://github.com/golang/go/issues/27719) but until it
 COPY go.mod go.sum ./
 
 # Add this line before `go build`
-RUN go mod graph | grep -v '@.*@' | awk '{print $2}' | xargs go get
+RUN go mod graph | awk '{if ($1 !~ "@") print $2}' | xargs go get
 ```
 
 Full Dockerfile example: [./Dockerfile](./Dockerfile)
 
 ## Benchmarks
 
-With `go mod graph | grep -v '@.*@' | awk '{print $2}' | xargs go get` dependency cache:
+I used `time` to measure how long it took to build a fresh docker image with `--no-cache` and then changed the main.go file by adding a comment so Docker would run the `go build` step again while keeping the preceeding cached docker layers.
+
+With `go mod graph | awk '{if ($1 !~ "@") print $2}' | xargs go get` dependency cache:
 
 ```
-# First run:
+# Fresh build with no cache:
+$ time docker build --no-cache -t golang-docker-cache .
+...
 13.54 real         0.12 user         0.07 sys
 
-# Change main.go whitespace:
+# Add comment to main.go:
+$ time docker build -t golang-docker-cache .
 2.74 real         0.12 user         0.10 sys
 ```
 
 With `go mod download` dependency cache:
 
 ```
-# First run:
+# Fresh build with no cache:
+$ time docker build --no-cache -t golang-docker-cache .
 15.13 real         0.13 user         0.09 sys
 
-# Change main.go whitespace:
+# Add comment to main.go:
+$ time docker build -t golang-docker-cache .
 9.03 real         0.12 user         0.10 sys
 ```
 
 Without any dependency cache:
 
 ```
-# First run:
+# Fresh build with no cache:
+$ time docker build --no-cache -t golang-docker-cache .
 12.12 real         0.12 user         0.08 sys
 
-# Change main.go whitespace:
+# Add comment to main.go:
+$ time docker build -t golang-docker-cache .
 12.19 real         0.12 user         0.10 sys
 ```
