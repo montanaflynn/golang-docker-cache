@@ -12,7 +12,7 @@ There is an [open issue](https://github.com/golang/go/issues/27719) but until it
 COPY go.mod go.sum ./
 
 # Add this line before `go build`
-RUN go mod graph | awk '{if ($1 !~ "@") print $2}' | xargs go get
+RUN go mod graph | awk '$1 !~ /@/ { print $2 }' | xargs -r go get
 ```
 
 Full Dockerfile example: [./Dockerfile](./Dockerfile)
@@ -21,7 +21,7 @@ Full Dockerfile example: [./Dockerfile](./Dockerfile)
 
 I used `time` to measure how long it took to build a fresh docker image with `--no-cache` and then changed the main.go file by adding a comment so Docker would run the `go build` step again while keeping the preceeding cached docker layers. 
 
-#### With `go mod graph | awk '{if ($1 !~ "@") print $2}' | xargs go get` dependency cache:
+#### With `go mod graph | awk '$1 !~ /@/ { print $2 }' | xargs -r go get` dependency cache:
 
 ```
 # Fresh build with no cache:
